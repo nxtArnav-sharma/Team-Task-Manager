@@ -11,15 +11,16 @@ const app = express();
 
 app.use(express.json());
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, '../public')));
+
+// Redirect root to login
+app.get('/', (req, res) => res.redirect('/login'));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/members', memberRoutes);
 
-// Redirect root to dashboard
-app.get('/', (req, res) => res.redirect('/dashboard'));
+app.use(express.static(path.join(__dirname, '../public')));
 
 // Serve HTML pages
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, '../public/pages/login.html')));
