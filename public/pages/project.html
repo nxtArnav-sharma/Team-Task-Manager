@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project - TaskFlow</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <aside class="sidebar">
+      <h1>TaskFlow</h1>
+      <nav>
+        <ul class="nav-links">
+          <li><a href="/dashboard">Dashboard</a></li>
+        </ul>
+      </nav>
+      <div class="sidebar-projects">
+        <h3>Projects</h3>
+        <ul id="sidebar-project-list" class="nav-links"></ul>
+      </div>
+      <button onclick="logout()" class="btn-danger" style="margin-top: auto;">Logout</button>
+    </aside>
+
+    <main class="main-content">
+      <header style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px;">
+        <div>
+          <h2 id="project-name">...</h2>
+          <p id="project-desc" style="color: var(--muted);"></p>
+        </div>
+        <div style="display: flex; gap: 12px;">
+          <button onclick="showModal('invite-modal')" class="admin-only btn-primary" style="display: none; background-color: var(--surface); border: 1px solid var(--border);">Invite</button>
+          <button onclick="showModal('task-modal')" class="admin-only btn-primary" style="display: none;">+ Add Task</button>
+        </div>
+      </header>
+
+      <div class="board">
+        <div class="column">
+          <h3>TODO</h3>
+          <div id="col-todo"></div>
+        </div>
+        <div class="column">
+          <h3>IN PROGRESS</h3>
+          <div id="col-progress"></div>
+        </div>
+        <div class="column">
+          <h3>DONE</h3>
+          <div id="col-done"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="task-panel" class="panel">
+    <h3>Task Details</h3>
+    <div style="margin-top: 24px;">
+      <label>Title</label>
+      <input type="text" id="edit-task-title">
+      <label>Description</label>
+      <textarea id="edit-task-desc" rows="4"></textarea>
+      <label>Status</label>
+      <select id="edit-task-status">
+        <option value="TODO">TODO</option>
+        <option value="IN_PROGRESS">IN PROGRESS</option>
+        <option value="DONE">DONE</option>
+      </select>
+      <label>Priority</label>
+      <select id="edit-task-priority">
+        <option value="LOW">LOW</option>
+        <option value="MEDIUM">MEDIUM</option>
+        <option value="HIGH">HIGH</option>
+      </select>
+      <label>Due Date</label>
+      <input type="date" id="edit-task-due">
+      <label>Assignee</label>
+      <select id="edit-task-assignee"></select>
+      
+      <div style="margin-top: 32px; display: flex; flex-direction: column; gap: 12px;">
+        <button id="save-task-btn" class="btn-primary">Save Changes</button>
+        <button id="delete-task-btn" class="btn-danger" style="display: none;">Delete Task</button>
+        <button onclick="document.getElementById('task-panel').classList.remove('open')" style="background: transparent; color: var(--muted);">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="task-modal" class="modal">
+    <div class="modal-content">
+      <h2>Add New Task</h2>
+      <form onsubmit="handleAddTask(event)">
+        <label for="task-title">Title</label>
+        <input type="text" id="task-title" required>
+        <label for="task-desc">Description</label>
+        <textarea id="task-desc" rows="3"></textarea>
+        <label for="task-priority">Priority</label>
+        <select id="task-priority">
+          <option value="LOW">LOW</option>
+          <option value="MEDIUM" selected>MEDIUM</option>
+          <option value="HIGH">HIGH</option>
+        </select>
+        <label for="task-due">Due Date</label>
+        <input type="date" id="task-due">
+        <label for="task-assignee">Assignee</label>
+        <select id="task-assignee"></select>
+        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+          <button type="button" onclick="closeModal('task-modal')" style="background: transparent; color: var(--muted);">Cancel</button>
+          <button type="submit" class="btn-primary">Add Task</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="invite-modal" class="modal">
+    <div class="modal-content">
+      <h2>Invite Member</h2>
+      <form onsubmit="handleInviteMember(event)">
+        <label for="invite-email">User Email</label>
+        <input type="email" id="invite-email" required>
+        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+          <button type="button" onclick="closeModal('invite-modal')" style="background: transparent; color: var(--muted);">Cancel</button>
+          <button type="submit" class="btn-primary">Invite</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/app.js"></script>
+  <script>
+    initProject().then(() => {
+      // Populate assignee dropdown in modal
+      const select = document.getElementById('task-assignee');
+      select.innerHTML = '<option value="">Unassigned</option>' + 
+        currentProject.members.map(m => `
+          <option value="${m.userId}">${m.user.name}</option>
+        `).join('');
+    });
+  </script>
+</body>
+</html>
