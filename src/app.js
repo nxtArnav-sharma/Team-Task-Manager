@@ -18,6 +18,9 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/members', memberRoutes);
 
+// Redirect root to dashboard
+app.get('/', (req, res) => res.redirect('/dashboard'));
+
 // Serve HTML pages
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, '../public/pages/login.html')));
 app.get('/signup', (req, res) => res.sendFile(path.join(__dirname, '../public/pages/signup.html')));
