@@ -5,7 +5,7 @@
   },
   "deploy": {
     "startCommand": "npx prisma migrate deploy && node server.js",
-    "healthcheckPath": "/api/auth/me",
+    "healthcheckPath": "/login",
     "restartPolicyType": "ON_FAILURE"
   }
 }
