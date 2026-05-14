@@ -1,14 +1,26 @@
 :root {
+  --bg: #f8f7f0;
+  --surface: #ffffff;
+  --border: #e5e5de;
+  --text: #1a1a1a;
+  --muted: #666660;
+  --accent: #1a1a1a; /* Modern minimalist black accent */
+  --accent-hover: #333333;
+  --danger: #ef4444;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --grid: rgba(0, 0, 0, 0.05);
+}
+
+/* Dark mode override for App pages only */
+.dark-theme {
   --bg: #0f1117;
   --surface: #1a1d27;
   --border: #2a2d3a;
   --text: #e2e8f0;
   --muted: #8892a4;
   --accent: #5865f2;
-  --accent-hover: #4752c4;
-  --danger: #ef4444;
-  --success: #22c55e;
-  --warning: #f59e0b;
+  --grid: rgba(255, 255, 255, 0.05);
 }
 
 * {
@@ -22,6 +34,15 @@ body {
   background-color: var(--bg);
   color: var(--text);
   line-height: 1.5;
+  background-image: 
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+h1, h2, .serif {
+  font-family: 'Source Serif 4', serif;
+  font-weight: 700;
 }
 
 a {
@@ -40,16 +61,12 @@ button {
   border-radius: 4px;
   padding: 8px 16px;
   font-weight: 600;
-  transition: background 0.2s;
+  transition: all 0.2s;
 }
 
 .btn-primary {
   background-color: var(--accent);
   color: white;
-}
-
-.btn-primary:hover {
-  background-color: var(--accent-hover);
 }
 
 .btn-danger {
@@ -62,7 +79,7 @@ input, select, textarea {
   padding: 10px;
   margin-top: 4px;
   margin-bottom: 16px;
-  background-color: var(--bg);
+  background-color: var(--surface);
   border: 1px solid var(--border);
   color: var(--text);
   border-radius: 4px;
@@ -73,36 +90,91 @@ input:focus {
   border-color: var(--accent);
 }
 
-/* Auth Pages */
-.auth-container {
+/* Landing Layout */
+.landing-container {
   display: flex;
-  justify-content: center;
-  align-items: center;
   min-height: 100vh;
+  padding: 80px 10%;
+  align-items: center;
+  gap: 60px;
 }
 
-.auth-card {
-  background-color: var(--surface);
-  padding: 32px;
-  border-radius: 8px;
-  width: 100%;
-  max-width: 400px;
-  border: 1px solid var(--border);
+.hero-section {
+  flex: 1.2;
 }
 
-.auth-card h2 {
+.hero-section h1 {
+  font-size: 5rem;
+  line-height: 0.95;
   margin-bottom: 24px;
-  text-align: center;
+  letter-spacing: -0.03em;
 }
 
-.error-message {
-  color: var(--danger);
-  background-color: rgba(239, 68, 68, 0.1);
-  padding: 10px;
-  border-radius: 4px;
-  margin-bottom: 16px;
-  display: none;
+.hero-section p {
+  font-size: 1.1rem;
+  color: var(--muted);
+  max-width: 500px;
+  margin-bottom: 32px;
 }
+
+.pills {
+  display: flex;
+  gap: 12px;
+}
+
+.pill {
+  padding: 6px 16px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: white;
+}
+
+/* Auth Card Landing */
+.auth-card-landing {
+  flex: 0.8;
+  background: white;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.05);
+  border: 1px solid var(--border);
+  max-width: 450px;
+}
+
+.auth-tabs {
+  display: flex;
+  background: #f1f0e8;
+  padding: 4px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+}
+
+.auth-tabs button {
+  flex: 1;
+  padding: 10px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.auth-tabs button.active {
+  background: white;
+  color: var(--text);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.btn-black {
+  background: #1a1a1a;
+  color: white;
+  width: 100%;
+  padding: 14px;
+  font-size: 1rem;
+  margin-top: 10px;
+}
+
+/* Original App Styles (Wrapped in .app-page) */
+.app-page .sidebar { /* ... kept from previous ... */ }
 
 /* Dashboard Layout */
 .app-container {

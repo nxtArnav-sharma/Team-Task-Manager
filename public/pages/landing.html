@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TaskFlow - Operational Command Center</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Source+Serif+4:opsz,wght@8..60,700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="landing-container">
+    <div class="hero-section">
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 60px;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h18v18H3zM9 9h6v6H9z"/></svg>
+        <span style="font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.8rem;">Team Task Manager</span>
+      </div>
+      <h1>Operational command center for project teams.</h1>
+      <p>Authenticate, create a project, invite members by email, assign work, and track delivery from one dashboard.</p>
+      <div class="pills">
+        <span class="pill">JWT sessions</span>
+        <span class="pill">Postgres relationships</span>
+        <span class="pill">Admin/Member access</span>
+      </div>
+    </div>
+
+    <div class="auth-card-landing">
+      <div class="auth-tabs">
+        <button id="tab-login" class="active" onclick="switchTab('login')">Login</button>
+        <button id="tab-signup" onclick="switchTab('signup')">Signup</button>
+      </div>
+
+      <div id="error-msg" class="error-message"></div>
+
+      <!-- Login Form -->
+      <form id="login-form">
+        <label for="login-email">Email</label>
+        <input type="email" id="login-email" required>
+        <label for="login-password">Password</label>
+        <input type="password" id="login-password" required>
+        <button type="submit" id="login-btn" class="btn-black">Enter workspace</button>
+      </form>
+
+      <!-- Signup Form (Hidden) -->
+      <form id="signup-form" style="display: none;">
+        <label for="signup-name">Full Name</label>
+        <input type="text" id="signup-name" required>
+        <label for="signup-email">Email</label>
+        <input type="email" id="signup-email" required>
+        <label for="signup-password">Password</label>
+        <input type="password" id="signup-password" required minlength="8">
+        <button type="submit" id="signup-btn" class="btn-black">Create Account</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/app.js"></script>
+  <script>
+    function switchTab(tab) {
+      const isLogin = tab === 'login';
+      document.getElementById('tab-login').classList.toggle('active', isLogin);
+      document.getElementById('tab-signup').classList.toggle('active', !isLogin);
+      document.getElementById('login-form').style.display = isLogin ? 'block' : 'none';
+      document.getElementById('signup-form').style.display = isLogin ? 'none' : 'block';
+      document.getElementById('error-msg').style.display = 'none';
+    }
+
+    document.getElementById('login-form').onsubmit = async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('login-btn');
+      const err = document.getElementById('error-msg');
+      btn.textContent = 'Entering...';
+      btn.disabled = true;
+      try {
+        await api('POST', '/auth/login', {
+          email: document.getElementById('login-email').value,
+          password: document.getElementById('login-password').value
+        });
+        window.location.href = '/dashboard';
+      } catch (e) {
+        err.textContent = e.message;
+        err.style.display = 'block';
+        btn.textContent = 'Enter workspace';
+        btn.disabled = false;
+      }
+    };
+
+    document.getElementById('signup-form').onsubmit = async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('signup-btn');
+      const err = document.getElementById('error-msg');
+      btn.textContent = 'Creating...';
+      btn.disabled = true;
+      try {
+        await api('POST', '/auth/signup', {
+          name: document.getElementById('signup-name').value,
+          email: document.getElementById('signup-email').value,
+          password: document.getElementById('signup-password').value
+        });
+        switchTab('login');
+        alert('Account created! Please login.');
+        btn.textContent = 'Create Account';
+        btn.disabled = false;
+      } catch (e) {
+        err.textContent = e.message;
+        err.style.display = 'block';
+        btn.textContent = 'Create Account';
+        btn.disabled = false;
+      }
+    };
+  </script>
+</body>
+</html>

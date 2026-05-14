@@ -12,8 +12,8 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 
-// Redirect root to login
-app.get('/', (req, res) => res.redirect('/login'));
+// Serve landing page on root
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, '../public/pages/landing.html')));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
