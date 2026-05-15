@@ -3,88 +3,190 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard - TaskFlow</title>
+  <title>Dashboard - TTM</title>
   <link rel="stylesheet" href="/css/style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Source+Serif+4:opsz,wght@8..60,700&display=swap" rel="stylesheet">
 </head>
-<body class="dark-theme app-page">
-  <div class="app-container">
+<body>
+  <div class="app-layout">
+    <!-- Sidebar -->
     <aside class="sidebar">
-      <h1>TaskFlow</h1>
-      <nav>
-        <ul class="nav-links">
-          <li><a href="/dashboard" class="active">Dashboard</a></li>
-        </ul>
-      </nav>
-      <div class="sidebar-projects">
-        <h3>Projects</h3>
-        <ul id="sidebar-project-list" class="nav-links"></ul>
+      <div class="user-profile">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 24px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h18v18H3zM9 9h6v6H9z"/></svg>
+          <span style="font-weight: 800; font-size: 0.9rem;">TTM</span>
+        </div>
+        <h3 id="user-name">Loading...</h3>
+        <p id="user-email">...</p>
       </div>
-      <button onclick="showModal('new-project-modal')" class="btn-primary" style="margin-top: auto;">+ New Project</button>
-      <button onclick="logout()" class="btn-danger" style="margin-top: 12px;">Logout</button>
+
+      <div class="sidebar-form">
+        <h4>New Project</h4>
+        <form id="create-project-form">
+          <input type="text" id="new-project-name" placeholder="New project name" required>
+          <textarea id="new-project-desc" placeholder="Project brief" rows="3"></textarea>
+          <button type="submit" class="btn-black">+ Create project</button>
+        </form>
+      </div>
+
+      <div class="project-list" id="sidebar-project-list">
+        <!-- Projects loaded via JS -->
+      </div>
+
+      <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid var(--border);">
+        <a href="#" onclick="logout()" style="display: flex; align-items: center; gap: 8px; font-size: 0.9rem; color: var(--muted);">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+          Logout
+        </a>
+      </div>
     </aside>
 
-    <main class="main-content">
-      <header style="margin-bottom: 32px;">
-        <h2>Welcome back, <span id="user-name">...</span></h2>
-      </header>
-
-      <div class="stats-grid">
+    <!-- Main Content -->
+    <main class="main-area">
+      <!-- Stats Bar -->
+      <div class="stats-bar">
         <div class="stat-card">
-          <h4>Total Tasks</h4>
-          <div id="stat-total" class="value">0</div>
+          <div class="label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Total Tasks</div>
+          <div class="value" id="stat-total">0</div>
         </div>
         <div class="stat-card">
-          <h4>Done</h4>
-          <div id="stat-done" class="value" style="color: var(--success);">0</div>
+          <div class="label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>In Progress</div>
+          <div class="value" id="stat-progress">0</div>
         </div>
         <div class="stat-card">
-          <h4>In Progress</h4>
-          <div id="stat-progress" class="value" style="color: var(--accent);">0</div>
+          <div class="label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14M22 4L12 14.01l-3-3"/></svg>Done</div>
+          <div class="value" id="stat-done">0</div>
         </div>
         <div class="stat-card">
-          <h4>Overdue</h4>
-          <div id="stat-overdue" class="value" style="color: var(--danger);">0</div>
+          <div class="label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0zM12 9v4M12 17h.01"/></svg>Overdue</div>
+          <div class="value" id="stat-overdue" style="color: var(--danger);">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 110-8 4 4 0 010 8zm12 14v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Tasks per user</div>
+          <div id="stat-per-user" style="font-size: 0.8rem; margin-top: 8px;">No data</div>
         </div>
       </div>
 
-      <section>
-        <h3 style="margin-bottom: 16px;">My Tasks</h3>
-        <table>
-          <thead>
-            <tr>
-              <th>Title</th>
-              <th>Project</th>
-              <th>Status</th>
-              <th>Priority</th>
-              <th>Due Date</th>
-            </tr>
-          </thead>
-          <tbody id="my-tasks-body"></tbody>
-        </table>
-      </section>
+      <!-- Project Header -->
+      <div id="project-view" style="display: none;">
+        <div class="project-header">
+          <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+            <div>
+              <span id="role-badge">ADMIN WORKSPACE</span>
+              <h2 id="project-name">...</h2>
+              <a href="#" id="project-link">https://github.com/nxtArnav-sharma/Team-Task-Manager.git</a>
+            </div>
+            <button class="pill" id="admin-indicator" style="display: none; background: #eef2f1; color: var(--success); border-color: #10b98144;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Admin
+            </button>
+          </div>
+        </div>
+
+        <!-- Board -->
+        <div class="board">
+          <div class="board-col">
+            <div class="col-header">To Do <span class="col-count" id="count-todo">0</span></div>
+            <div id="col-todo" class="task-list"></div>
+          </div>
+          <div class="board-col">
+            <div class="col-header">In Progress <span class="col-count" id="count-progress">0</span></div>
+            <div id="col-progress" class="task-list"></div>
+          </div>
+          <div class="board-col">
+            <div class="col-header">Done <span class="col-count" id="count-done">0</span></div>
+            <div id="col-done" class="task-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="empty-view" style="text-align: center; margin-top: 100px;">
+        <h2 style="font-size: 2.5rem; color: var(--muted);">Select a project to begin.</h2>
+        <p style="color: var(--muted);">Or create a new one from the sidebar.</p>
+      </div>
     </main>
+
+    <!-- Right Panel -->
+    <aside class="right-panel" id="project-right-panel" style="display: none;">
+      <div class="panel-section admin-only">
+        <h4><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg> Create Task</h4>
+        <form id="add-task-form">
+          <input type="text" id="task-title" placeholder="Task title" required>
+          <textarea id="task-desc" placeholder="Description" rows="3"></textarea>
+          <input type="date" id="task-due">
+          <select id="task-priority">
+            <option value="LOW">Low</option>
+            <option value="MEDIUM" selected>Medium</option>
+            <option value="HIGH">High</option>
+          </select>
+          <select id="task-assignee">
+            <option value="">Unassigned</option>
+          </select>
+          <button type="submit" class="btn-black">Add task</button>
+        </form>
+      </div>
+
+      <div class="panel-section admin-only">
+        <h4><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 110-8 4 4 0 010 8z"/></svg> Add Member</h4>
+        <form id="invite-member-form" style="display: flex; gap: 8px;">
+          <input type="email" id="invite-email" placeholder="member@email.com" required style="margin-bottom: 0;">
+          <button type="submit" class="btn-black" style="width: 44px; flex-shrink: 0;">+</button>
+        </form>
+      </div>
+
+      <div class="panel-section">
+        <h4><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 110-8 4 4 0 010 8z"/></svg> Team</h4>
+        <div id="project-team-list">
+          <!-- Members loaded via JS -->
+        </div>
+      </div>
+    </aside>
   </div>
 
-  <div id="new-project-modal" class="modal">
-    <div class="modal-content">
-      <h2>New Project</h2>
-      <form onsubmit="handleCreateProject(event)">
-        <label for="new-project-name">Project Name</label>
-        <input type="text" id="new-project-name" required>
-        <label for="new-project-desc">Description</label>
-        <textarea id="new-project-desc" rows="3"></textarea>
-        <div style="display: flex; gap: 12px; justify-content: flex-end;">
-          <button type="button" onclick="closeModal('new-project-modal')" style="background: transparent; color: var(--muted);">Cancel</button>
-          <button type="submit" class="btn-primary">Create Project</button>
-        </div>
-      </form>
+  <!-- Task Detail Slide-over (Panel) -->
+  <div id="task-panel" class="panel">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+      <h3 class="serif">Task Details</h3>
+      <button onclick="document.getElementById('task-panel').classList.remove('open')" style="background: none; color: var(--muted); font-size: 1.5rem;">&times;</button>
     </div>
+    <form>
+      <label>Title</label>
+      <input type="text" id="edit-task-title">
+      <label>Description</label>
+      <textarea id="edit-task-desc" rows="4"></textarea>
+      <label>Status</label>
+      <select id="edit-task-status">
+        <option value="TODO">To Do</option>
+        <option value="IN_PROGRESS">In Progress</option>
+        <option value="DONE">Done</option>
+      </select>
+      <label>Priority</label>
+      <select id="edit-task-priority">
+        <option value="LOW">Low</option>
+        <option value="MEDIUM">Medium</option>
+        <option value="HIGH">High</option>
+      </select>
+      <label>Due Date</label>
+      <input type="date" id="edit-task-due">
+      <label>Assignee</label>
+      <select id="edit-task-assignee"></select>
+      
+      <div style="margin-top: 24px; display: flex; gap: 12px;">
+        <button type="button" id="save-task-btn" class="btn-black">Save Changes</button>
+        <button type="button" id="delete-task-btn" class="btn-danger" style="background: #fee2e2; color: #ef4444; border: 1px solid #fecaca;">Delete</button>
+      </div>
+    </form>
   </div>
 
   <script src="/js/app.js"></script>
   <script>
-    initDashboard();
+    document.addEventListener('DOMContentLoaded', () => {
+      initDashboard();
+      
+      // Setup forms
+      document.getElementById('create-project-form').onsubmit = handleCreateProject;
+      document.getElementById('add-task-form').onsubmit = handleAddTask;
+      document.getElementById('invite-member-form').onsubmit = handleInviteMember;
+    });
   </script>
 </body>
 </html>

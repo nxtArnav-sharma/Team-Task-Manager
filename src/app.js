@@ -32,7 +32,7 @@ app.use(express.static(path.join(__dirname, '../public')));
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, '../public/pages/login.html')));
 app.get('/signup', (req, res) => res.sendFile(path.join(__dirname, '../public/pages/signup.html')));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, '../public/pages/dashboard.html')));
-app.get('/project/:id', (req, res) => res.sendFile(path.join(__dirname, '../public/pages/project.html')));
+app.get('/project/:id', (req, res) => res.sendFile(path.join(__dirname, '../public/pages/dashboard.html')));
 
 // 404
 app.use((req, res) => res.status(404).json({ success: false, message: 'Route not found' }));

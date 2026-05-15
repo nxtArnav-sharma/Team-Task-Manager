@@ -17,121 +17,160 @@ async function api(method, path, body) {
 async function requireAuth() {
   try {
     currentUser = await api('GET', '/auth/me');
-    document.getElementById('user-name')?.textContent = currentUser.name;
+    document.getElementById('user-name').textContent = currentUser.name;
+    document.getElementById('user-email').textContent = currentUser.email;
   } catch (err) {
-    window.location.href = '/login';
+    window.location.href = '/';
   }
 }
 
-function showModal(id) {
-  document.getElementById(id).style.display = 'flex';
+async function logout() {
+  await api('POST', '/auth/logout');
+  window.location.href = '/';
 }
-
-function closeModal(id) {
-  document.getElementById(id).style.display = 'none';
-}
-
-// Close modals on outside click or Escape
-window.onclick = (e) => {
-  if (e.target.classList.contains('modal')) e.target.style.display = 'none';
-};
-window.onkeydown = (e) => {
-  if (e.key === 'Escape') {
-    document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
-    document.querySelector('.panel').classList.remove('open');
-  }
-};
 
 async function loadSidebar() {
-  try {
-    projects = await api('GET', '/projects');
-    const list = document.getElementById('sidebar-project-list');
-    if (!list) return;
-    list.innerHTML = projects.map(p => `
-      <li><a href="/project/${p.id}" class="${currentProject?.id === p.id ? 'active' : ''}">${p.name}</a></li>
-    `).join('');
-  } catch (err) {
-    console.error('Failed to load projects');
-  }
+  projects = await api('GET', '/projects');
+  const list = document.getElementById('sidebar-project-list');
+  if (!list) return;
+
+  const currentPathId = parseInt(window.location.pathname.split('/').pop());
+
+  list.innerHTML = `
+    <h4 style="font-size: 0.7rem; text-transform: uppercase; margin-bottom: 12px; color: var(--muted); margin-top: 24px;">Projects</h4>
+    ${projects.map(p => {
+      const isAdmin = p.members.find(m => m.userId === currentUser.id)?.role === 'ADMIN';
+      const doneTasks = p.tasks?.filter(t => t.status === 'DONE').length || 0;
+      const totalTasks = p.tasks?.length || 0;
+      
+      return `
+        <a href="/project/${p.id}" class="project-item ${currentPathId === p.id ? 'active' : ''}">
+          <h4>${p.name}</h4>
+          <span>${isAdmin ? 'Admin' : 'Member'} • ${doneTasks}/${totalTasks} done</span>
+        </a>
+      `;
+    }).join('')}
+  `;
 }
 
 async function initDashboard() {
   await requireAuth();
   await loadSidebar();
-  try {
-    const stats = await api('GET', '/tasks/dashboard');
-    document.getElementById('stat-total').textContent = stats.total;
-    document.getElementById('stat-done').textContent = stats.done;
-    document.getElementById('stat-progress').textContent = stats.inProgress;
-    document.getElementById('stat-overdue').textContent = stats.overdue;
-
-    const myTasks = await api('GET', '/tasks/my');
-    const tableBody = document.getElementById('my-tasks-body');
-    const now = new Date();
-    
-    tableBody.innerHTML = myTasks.map(t => {
-      const isOverdue = t.dueDate && new Date(t.dueDate) < now && t.status !== 'DONE';
-      return `
-        <tr class="${isOverdue ? 'overdue' : ''}">
-          <td>${t.title}</td>
-          <td>${t.project.name}</td>
-          <td><span class="badge badge-${t.status.toLowerCase()}"><span class="badge-dot"></span>${t.status}</span></td>
-          <td>${t.priority}</td>
-          <td>${t.dueDate ? new Date(t.dueDate).toLocaleDateString() : 'No date'}</td>
-        </tr>
-      `;
-    }).join('');
-  } catch (err) {
-    alert('Failed to load dashboard data');
+  
+  const path = window.location.pathname;
+  if (path.startsWith('/project/')) {
+    const projectId = path.split('/').pop();
+    await loadProject(projectId);
+  } else {
+    document.getElementById('empty-view').style.display = 'block';
+    await loadGlobalStats();
   }
 }
 
-async function initProject() {
-  await requireAuth();
-  await loadSidebar();
+async function loadGlobalStats() {
+  const stats = await api('GET', '/tasks/dashboard');
+  document.getElementById('stat-total').textContent = stats.total;
+  document.getElementById('stat-done').textContent = stats.done;
+  document.getElementById('stat-progress').textContent = stats.inProgress;
+  document.getElementById('stat-overdue').textContent = stats.overdue;
   
-  const projectId = window.location.pathname.split('/').pop();
-  try {
-    currentProject = await api('GET', `/projects/${projectId}`);
-    document.getElementById('project-name').textContent = currentProject.name;
-    document.getElementById('project-desc').textContent = currentProject.description || '';
+  // Tasks per user breakdown
+  const myTasks = await api('GET', '/tasks/my');
+  const perUser = document.getElementById('stat-per-user');
+  if (perUser) {
+    perUser.innerHTML = `You have <strong>${myTasks.length}</strong> assigned tasks.`;
+  }
+}
 
+async function loadProject(id) {
+  try {
+    currentProject = await api('GET', `/projects/${id}`);
+    document.getElementById('empty-view').style.display = 'none';
+    document.getElementById('project-view').style.display = 'block';
+    document.getElementById('project-right-panel').style.display = 'block';
+
+    document.getElementById('project-name').textContent = currentProject.name;
+    
     const member = currentProject.members.find(m => m.userId === currentUser.id);
     const isAdmin = member?.role === 'ADMIN';
+    
+    document.getElementById('role-badge').textContent = isAdmin ? 'ADMIN WORKSPACE' : 'TEAM WORKSPACE';
+    document.getElementById('admin-indicator').style.display = isAdmin ? 'flex' : 'none';
 
-    if (isAdmin) {
-      document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
+    // Show/hide admin panels
+    document.querySelectorAll('.admin-only').forEach(el => {
+      el.style.display = isAdmin ? 'block' : 'none';
+    });
+
+    renderBoard(currentProject.tasks);
+    renderTeam(currentProject.members);
+    updateProjectStats(currentProject.tasks);
+    
+    // Setup assignee dropdown
+    const assigneeSelect = document.getElementById('task-assignee');
+    if (assigneeSelect) {
+      assigneeSelect.innerHTML = '<option value="">Unassigned</option>' + 
+        currentProject.members.map(m => `<option value="${m.userId}">${m.user.name}</option>`).join('');
     }
 
-    renderTasks(currentProject.tasks);
   } catch (err) {
-    alert('Failed to load project');
+    console.error(err);
     window.location.href = '/dashboard';
   }
 }
 
-function renderTasks(tasks) {
-  const columns = {
-    'TODO': document.getElementById('col-todo'),
-    'IN_PROGRESS': document.getElementById('col-progress'),
-    'DONE': document.getElementById('col-done')
+function updateProjectStats(tasks) {
+  const stats = {
+    total: tasks.length,
+    done: tasks.filter(t => t.status === 'DONE').length,
+    progress: tasks.filter(t => t.status === 'IN_PROGRESS').length,
+    overdue: tasks.filter(t => t.dueDate && new Date(t.dueDate) < new Date() && t.status !== 'DONE').length
   };
+  document.getElementById('stat-total').textContent = stats.total;
+  document.getElementById('stat-done').textContent = stats.done;
+  document.getElementById('stat-progress').textContent = stats.progress;
+  document.getElementById('stat-overdue').textContent = stats.overdue;
+}
 
-  Object.values(columns).forEach(col => col.innerHTML = '');
+function renderBoard(tasks) {
+  const groups = { 'TODO': [], 'IN_PROGRESS': [], 'DONE': [] };
+  tasks.forEach(t => groups[t.status].push(t));
 
-  tasks.forEach(t => {
-    const card = document.createElement('div');
-    card.className = 'task-card';
-    card.onclick = () => openTaskPanel(t);
-    card.innerHTML = `
-      <h4>${t.title}</h4>
-      <div class="task-meta">
-        <span class="badge">${t.priority}</span>
-        <span>${t.assignee ? t.assignee.name.split(' ').map(n => n[0]).join('') : '??'}</span>
+  for (const [status, list] of Object.entries(groups)) {
+    const container = document.getElementById(`col-${status.toLowerCase().replace('_', '-')}`);
+    const countEl = document.getElementById(`count-${status.toLowerCase().replace('_', '-')}`);
+    if (!container) continue;
+
+    countEl.textContent = list.length;
+    container.innerHTML = list.map(t => {
+      const initials = t.assignee ? t.assignee.name.split(' ').map(n => n[0]).join('') : '??';
+      return `
+        <div class="task-card" onclick="openTaskPanel(${JSON.stringify(t).replace(/"/g, '&quot;')})">
+          <h4 style="margin-bottom: 12px;">${t.title}</h4>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+             <span style="font-size: 0.7rem; font-weight: 800; color: var(--muted); border: 1px solid var(--border); padding: 2px 6px; border-radius: 4px;">${t.priority}</span>
+             <div style="width: 24px; height: 24px; background: #eef2f1; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 700; border: 1px solid var(--border);">
+               ${initials}
+             </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+}
+
+function renderTeam(members) {
+  const container = document.getElementById('project-team-list');
+  if (!container) return;
+  container.innerHTML = members.map(m => `
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 0.85rem;">
+      <div>
+        <div style="font-weight: 600;">${m.user.name}</div>
+        <div style="font-size: 0.75rem; color: var(--muted);">${m.user.email}</div>
       </div>
-    `;
-    columns[t.status].appendChild(card);
-  });
+      <span style="font-size: 0.6rem; font-weight: 800; color: ${m.role === 'ADMIN' ? 'var(--success)' : 'var(--muted)'};">${m.role}</span>
+    </div>
+  `).join('');
 }
 
 async function openTaskPanel(task) {
@@ -151,7 +190,6 @@ async function openTaskPanel(task) {
     `).join('');
 
   const isAdmin = currentProject.members.find(m => m.userId === currentUser.id)?.role === 'ADMIN';
-  const isAssignee = task.assigneeId === currentUser.id;
 
   // Disable fields if not admin
   const adminFields = ['edit-task-title', 'edit-task-desc', 'edit-task-priority', 'edit-task-due', 'edit-task-assignee'];
@@ -159,29 +197,20 @@ async function openTaskPanel(task) {
     document.getElementById(id).disabled = !isAdmin;
   });
 
-  const saveBtn = document.getElementById('save-task-btn');
-  saveBtn.onclick = async () => {
-    try {
-      const body = {
-        status: document.getElementById('edit-task-status').value
-      };
-      if (isAdmin) {
-        body.title = document.getElementById('edit-task-title').value;
-        body.description = document.getElementById('edit-task-desc').value;
-        body.priority = document.getElementById('edit-task-priority').value;
-        body.dueDate = document.getElementById('edit-task-due').value;
-        body.assigneeId = parseInt(assigneeSelect.value) || null;
-      }
-      await api('PUT', `/tasks/${task.id}`, body);
-      location.reload();
-    } catch (err) {
-      alert(err.message);
+  document.getElementById('save-task-btn').onclick = async () => {
+    const body = { status: document.getElementById('edit-task-status').value };
+    if (isAdmin) {
+      body.title = document.getElementById('edit-task-title').value;
+      body.description = document.getElementById('edit-task-desc').value;
+      body.priority = document.getElementById('edit-task-priority').value;
+      body.dueDate = document.getElementById('edit-task-due').value;
+      body.assigneeId = parseInt(assigneeSelect.value) || null;
     }
+    await api('PUT', `/tasks/${task.id}`, body);
+    location.reload();
   };
 
-  const deleteBtn = document.getElementById('delete-task-btn');
-  deleteBtn.style.display = isAdmin ? 'block' : 'none';
-  deleteBtn.onclick = async () => {
+  document.getElementById('delete-task-btn').onclick = async () => {
     if (confirm('Delete task?')) {
       await api('DELETE', `/tasks/${task.id}`);
       location.reload();
@@ -193,17 +222,12 @@ async function handleCreateProject(e) {
   e.preventDefault();
   const name = document.getElementById('new-project-name').value;
   const description = document.getElementById('new-project-desc').value;
-  try {
-    const project = await api('POST', '/projects', { name, description });
-    window.location.href = `/project/${project.id}`;
-  } catch (err) {
-    alert(err.message);
-  }
+  const project = await api('POST', '/projects', { name, description });
+  window.location.href = `/project/${project.id}`;
 }
 
 async function handleAddTask(e) {
   e.preventDefault();
-  const projectId = currentProject.id;
   const body = {
     title: document.getElementById('task-title').value,
     description: document.getElementById('task-desc').value,
@@ -211,27 +235,14 @@ async function handleAddTask(e) {
     dueDate: document.getElementById('task-due').value,
     assigneeId: parseInt(document.getElementById('task-assignee').value) || null
   };
-  try {
-    await api('POST', `/tasks/project/${projectId}`, body);
-    location.reload();
-  } catch (err) {
-    alert(err.message);
-  }
+  await api('POST', `/tasks/project/${currentProject.id}`, body);
+  location.reload();
 }
 
 async function handleInviteMember(e) {
   e.preventDefault();
   const email = document.getElementById('invite-email').value;
-  try {
-    await api('POST', `/members/project/${currentProject.id}/invite`, { email });
-    alert('Member invited');
-    location.reload();
-  } catch (err) {
-    alert(err.message);
-  }
-}
-
-async function logout() {
-  await api('POST', '/auth/logout');
-  window.location.href = '/login';
+  await api('POST', `/members/project/${currentProject.id}/invite`, { email });
+  alert('Member invited');
+  location.reload();
 }
