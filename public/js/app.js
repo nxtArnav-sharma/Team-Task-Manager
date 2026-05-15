@@ -44,10 +44,10 @@ async function loadSidebar() {
   list.innerHTML = `
     <h4 style="font-size: 0.7rem; text-transform: uppercase; margin-bottom: 12px; color: var(--muted); margin-top: 24px;">Projects</h4>
     ${projects.map(p => {
-      const member = p.members.find(m => m.userId === currentUser.id);
+      const member = (p.members || []).find(m => m.userId === currentUser.id);
       const isAdmin = member?.role === 'ADMIN';
-      const doneTasks = p.tasks?.filter(t => t.status === 'DONE').length || 0;
-      const totalTasks = p.tasks?.length || 0;
+      const doneTasks = (p.tasks || []).filter(t => t.status === 'DONE').length;
+      const totalTasks = (p.tasks || []).length;
       const isActive = currentPathId === p.id;
       
       return `

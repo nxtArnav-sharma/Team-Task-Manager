@@ -10,8 +10,8 @@ const getProjects = async (req, res, next) => {
         }
       },
       include: {
-        owner: { select: { name: true } },
-        _count: { select: { members: true } }
+        members: true,
+        tasks: { select: { status: true } }
       }
     });
     res.json({ success: true, data: projects });
