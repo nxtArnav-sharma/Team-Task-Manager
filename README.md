@@ -2,7 +2,7 @@
 
 A professional team task management application built with Node.js, Express, and PostgreSQL. Designed for speed and simplicity in team collaboration.
 
-Live URL: [https://team-task-manager.up.railway.app](https://team-task-manager.up.railway.app)
+Live URL: [https://team-task-manager.up.railway.app](https://team-task-manager-production-2272.up.railway.app/)
 
 ## Tech Stack
 - **Backend:** Node.js, Express
