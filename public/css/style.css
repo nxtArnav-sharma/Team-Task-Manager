@@ -185,6 +185,10 @@ input:focus {
   border-radius: 8px;
   margin-bottom: 8px;
   transition: all 0.2s;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
 }
 
 .project-item:hover, .project-item.active {
@@ -192,8 +196,28 @@ input:focus {
   border-color: #10b98166;
 }
 
-.project-item h4 { font-size: 0.95rem; }
+.project-info {
+  flex: 1;
+}
+
+.project-item h4 { font-size: 0.95rem; margin-bottom: 2px; }
 .project-item span { font-size: 0.75rem; color: var(--muted); }
+
+.delete-project-btn {
+  opacity: 0;
+  color: var(--danger);
+  padding: 4px;
+  transition: opacity 0.2s;
+  background: none;
+}
+
+.project-item:hover .delete-project-btn {
+  opacity: 0.6;
+}
+
+.delete-project-btn:hover {
+  opacity: 1 !important;
+}
 
 /* Main Content */
 .main-area {
