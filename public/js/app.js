@@ -155,23 +155,33 @@ function updateProjectStats(tasks) {
 }
 
 function renderBoard(tasks) {
+  const mapping = { 
+    'TODO': 'todo', 
+    'IN_PROGRESS': 'progress', 
+    'DONE': 'done' 
+  };
+  
   const groups = { 'TODO': [], 'IN_PROGRESS': [], 'DONE': [] };
   tasks.forEach(t => groups[t.status].push(t));
 
   for (const [status, list] of Object.entries(groups)) {
-    const container = document.getElementById(`col-${status.toLowerCase().replace('_', '-')}`);
-    const countEl = document.getElementById(`count-${status.toLowerCase().replace('_', '-')}`);
-    if (!container) continue;
+    const idPart = mapping[status];
+    const container = document.getElementById(`col-${idPart}`);
+    const countEl = document.getElementById(`count-${idPart}`);
+    
+    if (!container || !countEl) continue;
 
     countEl.textContent = list.length;
     container.innerHTML = list.map(t => {
       const initials = t.assignee ? t.assignee.name.split(' ').map(n => n[0]).join('') : '??';
+      const isOverdue = t.dueDate && new Date(t.dueDate) < new Date() && t.status !== 'DONE';
+      
       return `
-        <div class="task-card" onclick='openTaskPanel(${JSON.stringify(t)})'>
-          <h4 style="margin-bottom: 12px; font-weight: 600;">${t.title}</h4>
+        <div class="task-card" onclick='openTaskPanel(${JSON.stringify(t)})' style="${isOverdue ? 'border-color: var(--danger); background: #fffafb;' : ''}">
+          <h4 style="margin-bottom: 12px; font-weight: 600; ${isOverdue ? 'color: var(--danger);' : ''}">${t.title}</h4>
           <div style="display: flex; justify-content: space-between; align-items: center;">
-             <span style="font-size: 0.65rem; font-weight: 800; color: var(--muted); border: 1px solid var(--border); padding: 2px 6px; border-radius: 4px;">${t.priority}</span>
-             <div style="width: 24px; height: 24px; background: #eef2f1; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 700; border: 1px solid var(--border);" title="${t.assignee?.name || 'Unassigned'}">
+             <span style="font-size: 0.65rem; font-weight: 800; color: ${isOverdue ? 'var(--danger)' : 'var(--muted)'}; border: 1px solid ${isOverdue ? 'var(--danger)' : 'var(--border)'}; padding: 2px 6px; border-radius: 4px;">${t.priority}</span>
+             <div style="width: 24px; height: 24px; background: #eef2f1; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 700; border: 1px solid ${isOverdue ? 'var(--danger)' : 'var(--border)'};" title="${t.assignee?.name || 'Unassigned'}">
                ${initials}
              </div>
           </div>
