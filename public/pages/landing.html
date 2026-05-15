@@ -53,8 +53,19 @@
     </div>
   </div>
 
-  <script src="/js/app.js"></script>
   <script>
+    async function api(method, path, body) {
+      const res = await fetch(`/api${path}`, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: body ? JSON.stringify(body) : undefined,
+        credentials: 'include'
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message);
+      return data.data;
+    }
+
     function switchTab(tab) {
       const isLogin = tab === 'login';
       document.getElementById('tab-login').classList.toggle('active', isLogin);
