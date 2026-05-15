@@ -3,15 +3,20 @@ let currentProject = null;
 let projects = [];
 
 async function api(method, path, body) {
-  const res = await fetch(`/api${path}`, {
-    method,
-    headers: { 'Content-Type': 'application/json' },
-    body: body ? JSON.stringify(body) : undefined,
-    credentials: 'include'
-  });
-  const data = await res.json();
-  if (!data.success) throw new Error(data.message);
-  return data.data;
+  try {
+    const res = await fetch(`/api${path}`, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: body ? JSON.stringify(body) : undefined,
+      credentials: 'include'
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message);
+    return data.data;
+  } catch (err) {
+    console.error(`API Error (${path}):`, err);
+    throw err;
+  }
 }
 
 async function requireAuth() {
@@ -39,14 +44,16 @@ async function loadSidebar() {
   list.innerHTML = `
     <h4 style="font-size: 0.7rem; text-transform: uppercase; margin-bottom: 12px; color: var(--muted); margin-top: 24px;">Projects</h4>
     ${projects.map(p => {
-      const isAdmin = p.members.find(m => m.userId === currentUser.id)?.role === 'ADMIN';
+      const member = p.members.find(m => m.userId === currentUser.id);
+      const isAdmin = member?.role === 'ADMIN';
       const doneTasks = p.tasks?.filter(t => t.status === 'DONE').length || 0;
       const totalTasks = p.tasks?.length || 0;
+      const isActive = currentPathId === p.id;
       
       return `
-        <a href="/project/${p.id}" class="project-item ${currentPathId === p.id ? 'active' : ''}">
-          <h4>${p.name}</h4>
-          <span>${isAdmin ? 'Admin' : 'Member'} • ${doneTasks}/${totalTasks} done</span>
+        <a href="/project/${p.id}" class="project-item ${isActive ? 'active' : ''}">
+          <h4 style="font-weight: 600;">${p.name}</h4>
+          <span style="color: var(--muted); font-size: 0.75rem;">${isAdmin ? 'Admin' : 'Member'} • ${doneTasks}/${totalTasks} done</span>
         </a>
       `;
     }).join('')}
@@ -63,6 +70,7 @@ async function initDashboard() {
     await loadProject(projectId);
   } else {
     document.getElementById('empty-view').style.display = 'block';
+    document.getElementById('project-view').style.display = 'none';
     await loadGlobalStats();
   }
 }
@@ -74,11 +82,10 @@ async function loadGlobalStats() {
   document.getElementById('stat-progress').textContent = stats.inProgress;
   document.getElementById('stat-overdue').textContent = stats.overdue;
   
-  // Tasks per user breakdown
   const myTasks = await api('GET', '/tasks/my');
   const perUser = document.getElementById('stat-per-user');
   if (perUser) {
-    perUser.innerHTML = `You have <strong>${myTasks.length}</strong> assigned tasks.`;
+    perUser.innerHTML = `You have <strong>${myTasks.length}</strong> tasks assigned.`;
   }
 }
 
@@ -97,7 +104,6 @@ async function loadProject(id) {
     document.getElementById('role-badge').textContent = isAdmin ? 'ADMIN WORKSPACE' : 'TEAM WORKSPACE';
     document.getElementById('admin-indicator').style.display = isAdmin ? 'flex' : 'none';
 
-    // Show/hide admin panels
     document.querySelectorAll('.admin-only').forEach(el => {
       el.style.display = isAdmin ? 'block' : 'none';
     });
@@ -106,7 +112,6 @@ async function loadProject(id) {
     renderTeam(currentProject.members);
     updateProjectStats(currentProject.tasks);
     
-    // Setup assignee dropdown
     const assigneeSelect = document.getElementById('task-assignee');
     if (assigneeSelect) {
       assigneeSelect.innerHTML = '<option value="">Unassigned</option>' + 
@@ -114,7 +119,6 @@ async function loadProject(id) {
     }
 
   } catch (err) {
-    console.error(err);
     window.location.href = '/dashboard';
   }
 }
@@ -145,11 +149,11 @@ function renderBoard(tasks) {
     container.innerHTML = list.map(t => {
       const initials = t.assignee ? t.assignee.name.split(' ').map(n => n[0]).join('') : '??';
       return `
-        <div class="task-card" onclick="openTaskPanel(${JSON.stringify(t).replace(/"/g, '&quot;')})">
-          <h4 style="margin-bottom: 12px;">${t.title}</h4>
+        <div class="task-card" onclick='openTaskPanel(${JSON.stringify(t)})'>
+          <h4 style="margin-bottom: 12px; font-weight: 600;">${t.title}</h4>
           <div style="display: flex; justify-content: space-between; align-items: center;">
-             <span style="font-size: 0.7rem; font-weight: 800; color: var(--muted); border: 1px solid var(--border); padding: 2px 6px; border-radius: 4px;">${t.priority}</span>
-             <div style="width: 24px; height: 24px; background: #eef2f1; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 700; border: 1px solid var(--border);">
+             <span style="font-size: 0.65rem; font-weight: 800; color: var(--muted); border: 1px solid var(--border); padding: 2px 6px; border-radius: 4px;">${t.priority}</span>
+             <div style="width: 24px; height: 24px; background: #eef2f1; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 700; border: 1px solid var(--border);" title="${t.assignee?.name || 'Unassigned'}">
                ${initials}
              </div>
           </div>
@@ -168,7 +172,7 @@ function renderTeam(members) {
         <div style="font-weight: 600;">${m.user.name}</div>
         <div style="font-size: 0.75rem; color: var(--muted);">${m.user.email}</div>
       </div>
-      <span style="font-size: 0.6rem; font-weight: 800; color: ${m.role === 'ADMIN' ? 'var(--success)' : 'var(--muted)'};">${m.role}</span>
+      <span style="font-size: 0.6rem; font-weight: 800; color: ${m.role === 'ADMIN' ? 'var(--success)' : 'var(--muted)'}; border: 1px solid var(--border); padding: 1px 4px; border-radius: 4px;">${m.role}</span>
     </div>
   `).join('');
 }
@@ -191,7 +195,6 @@ async function openTaskPanel(task) {
 
   const isAdmin = currentProject.members.find(m => m.userId === currentUser.id)?.role === 'ADMIN';
 
-  // Disable fields if not admin
   const adminFields = ['edit-task-title', 'edit-task-desc', 'edit-task-priority', 'edit-task-due', 'edit-task-assignee'];
   adminFields.forEach(id => {
     document.getElementById(id).disabled = !isAdmin;
@@ -243,6 +246,6 @@ async function handleInviteMember(e) {
   e.preventDefault();
   const email = document.getElementById('invite-email').value;
   await api('POST', `/members/project/${currentProject.id}/invite`, { email });
-  alert('Member invited');
+  alert('Member added to project');
   location.reload();
 }

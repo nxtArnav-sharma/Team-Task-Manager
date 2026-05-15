@@ -114,12 +114,12 @@
           <textarea id="task-desc" placeholder="Description" rows="3"></textarea>
           <input type="date" id="task-due">
           <select id="task-priority">
-            <option value="LOW">Low</option>
-            <option value="MEDIUM" selected>Medium</option>
-            <option value="HIGH">High</option>
+            <option value="LOW">Low Impact</option>
+            <option value="MEDIUM" selected>Medium Impact</option>
+            <option value="HIGH">High Impact</option>
           </select>
           <select id="task-assignee">
-            <option value="">Unassigned</option>
+            <option value="">Assigned candidate</option>
           </select>
           <button type="submit" class="btn-black">Add task</button>
         </form>
@@ -159,15 +159,15 @@
         <option value="IN_PROGRESS">In Progress</option>
         <option value="DONE">Done</option>
       </select>
-      <label>Priority</label>
+      <label>Impact</label>
       <select id="edit-task-priority">
-        <option value="LOW">Low</option>
-        <option value="MEDIUM">Medium</option>
-        <option value="HIGH">High</option>
+        <option value="LOW">Low Impact</option>
+        <option value="MEDIUM">Medium Impact</option>
+        <option value="HIGH">High Impact</option>
       </select>
       <label>Due Date</label>
       <input type="date" id="edit-task-due">
-      <label>Assignee</label>
+      <label>Assigned Candidate</label>
       <select id="edit-task-assignee"></select>
       
       <div style="margin-top: 24px; display: flex; gap: 12px;">
